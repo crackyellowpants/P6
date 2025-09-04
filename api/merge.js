@@ -45,7 +45,7 @@ export default async function handler(req, res) {
 
     await fs.promises.writeFile(filePath, resultBuffer);
 
-    // Markdown/AI용 URL 반환
+    // Markdown/AI에서 접근 가능한 URL 반환
     const url = `${req.headers.origin}/${filename}`;
     res.status(200).json({ url });
 
