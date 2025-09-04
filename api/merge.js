@@ -37,12 +37,13 @@ export default async function handler(req, res) {
     const bgBuffer = Buffer.from(await bgResp.arrayBuffer());
     const ovBuffer = Buffer.from(await ovResp.arrayBuffer());
 
+    // Sharp로 합성 후 PNG로 변환 (AI 친화적)
     const result = await sharp(bgBuffer)
       .composite([{ input: ovBuffer, top: parseInt(y), left: parseInt(x) }])
-      .webp()  // PNG → WEBP
+      .png()   // WebP 원본은 그대로 GitHub에, 반환만 PNG
       .toBuffer();
 
-    res.setHeader("Content-Type", "image/webp");
+    res.setHeader("Content-Type", "image/png");
     res.send(result);
   } catch (err) {
     console.error(err);
