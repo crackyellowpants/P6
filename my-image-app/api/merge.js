@@ -27,10 +27,10 @@ export default async function handler(req, res) {
 
     const result = await sharp(bgBuffer)
       .composite([{ input: ovBuffer, top: parseInt(y), left: parseInt(x) }])
-      .png()
+      .webp()
       .toBuffer();
 
-    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Content-Type", "image/webp");
     res.send(result);
   } catch (err) {
     res.status(500).send("Error: " + err.message);
