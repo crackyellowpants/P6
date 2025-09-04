@@ -1,4 +1,7 @@
 import sharp from "sharp";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 
 export default async function handler(req, res) {
   try {
@@ -11,7 +14,7 @@ export default async function handler(req, res) {
 
     const baseURL = `https://raw.githubusercontent.com/crackyellowpants/${repoName}/refs/heads/main/`;
 
-    // 파일명이 그냥 문자이면 GitHub raw URL로 변환
+    // bg, overlay가 GitHub 파일명일 경우 URL 변환
     if (bg && !bg.startsWith("http")) bg = `${baseURL}${bg}.webp`;
     if (overlay && !overlay.startsWith("http")) overlay = `${baseURL}${overlay}.webp`;
 
@@ -30,16 +33,21 @@ export default async function handler(req, res) {
     const bgBuffer = Buffer.from(await bgResp.arrayBuffer());
     const ovBuffer = Buffer.from(await ovResp.arrayBuffer());
 
-    // Sharp로 합성 → WebP 그대로 메모리 반환
+    // 합성
     const resultBuffer = await sharp(bgBuffer)
       .composite([{ input: ovBuffer, top: parseInt(y), left: parseInt(x) }])
       .webp()
       .toBuffer();
 
-    // 브라우저가 임시 캐시 활용 가능
-    res.setHeader("Content-Type", "image/webp");
-    // Optional: Cache-Control 설정 없이 브라우저 기본 캐시 활용
-    res.send(resultBuffer);
+    // 퍼블릭 디렉토리에 UUID 기반 파일명으로 저장
+    const filename = `merged-${uuidv4()}.webp`;
+    const filePath = path.join(process.cwd(), "public", filename);
+
+    await fs.promises.writeFile(filePath, resultBuffer);
+
+    // Markdown/AI용 URL 반환
+    const url = `${req.headers.origin}/${filename}`;
+    res.status(200).json({ url });
 
   } catch (err) {
     console.error(err);
